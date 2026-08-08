@@ -52,6 +52,7 @@ The expanded evidence and decision package is in:
 - [Chroot options](research/chroot-options.md)
 - [Path D chroot](research/path-d-chroot.md)
 - [Hardware and software source matrix](research/source-matrix.md)
+- [Reproducible Docker build results and deployment boundary](research/build-results.md)
 
 ## Repo layout
 
@@ -70,6 +71,12 @@ research/
   gpu-support.md           # Live GPU evidence and mainline/Android options
   rk3066-lima.config       # Non-flashing mainline Lima/DRM kernel fragment
   rk3066-gpu-enable.fragment.dtsi # Review-only board-DTS enablement fragment
+  rk3066-linux3188-mt5931-mali.config # Legacy MT5931 + Mali enablement
+  build-results.md         # Docker compile results and safe deployment boundary
+
+build/
+  linux3188/                # Docker cross-build for legacy Wi-Fi + Mali
+  mainline/                 # Docker cross-build for Lima/RK3066 reference
 ```
 
 ## Key sources
@@ -89,4 +96,5 @@ research/
 - [x] Driver availability research (exists, wrong earlier claim corrected)
 - [x] Path A / B / C feasibility research
 - [x] Detailed hardware, firmware, boot, GPU, distro, source, and live Android-vs-DRM review
+- [x] Docker validation: legacy MT5931/vendor Mali components and mainline Lima/RK3066 reference zImage/DTB
 - [ ] Decide which path to pursue (A = Linux3188 full Linux, B = external module, C = mainline, D = chroot on Android)
