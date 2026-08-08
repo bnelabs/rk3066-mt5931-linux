@@ -6,3 +6,4 @@ recovery.img
 boot.img
 node_modules/
 .DS_Store
+__pycache__/

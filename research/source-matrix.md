@@ -7,6 +7,11 @@ repositories are historical, board-specific, or both. A repository being
 public or recently mirrored does not mean that its image, loader, partition
 file, or firmware is suitable for rk30mtk.
 
+The exact revisions used in this review are collected in
+[source-lock.md](source-lock.md). The lock records source references and
+reproducibility metadata; it does not vendor third-party trees or proprietary
+device blobs.
+
 ## Device and boot sources
 
 | Source | Useful evidence | Reuse boundary |
@@ -19,6 +24,7 @@ file, or firmware is suitable for rk30mtk.
 | [linuxerwang/rkflashkit](https://github.com/linuxerwang/rkflashkit) | Alternative open-source Rockchip image toolkit | General Rockchip tool, not proof of this board's loader compatibility |
 | [Galland/rk30_linux_initramfs](https://github.com/Galland/rk30_linux_initramfs) | Historical RK30/RK31 initramfs and fake-ramdisk material | Boot-image format reference only |
 | [linuxium/3066-NAND](https://github.com/linuxium/3066-NAND) | NAND-only Ubuntu layout and historical boot procedure | Its repartitioning and mtdblock0 assumptions do not match the untouched attached unit |
+| [dayongxie/rk2918_tools](https://github.com/dayongxie/rk2918_tools/tree/761b9f67df1c43abb46198671658d86a9c421282) | KRNL header, payload-length, and Rockchip CRC pack/unpack reference | Format reference only; does not prove loader or partition compatibility |
 
 The attached USB identity is 0x2207:0x0010 in Android ADB mode. Rockusb tools
 expect 0x2207:0x300a. The [U-Boot RK3066 board documentation](https://docs.u-boot.org/en/v2023.10/board/rockchip/rockchip.html)
@@ -36,6 +42,12 @@ recovery verification a prerequisite, not an implementation detail.
 | [olegk0/rk3x_kernel_3.0.36](https://github.com/olegk0/rk3x_kernel_3.0.36) | RK3066/MK808 reference with RK901 Wi-Fi | Useful kernel history; wrong wireless hardware |
 | [aloksinha2001/picuntu-3.0.8-alok](https://github.com/aloksinha2001/picuntu-3.0.8-alok) | Picuntu integrated kernel and historical MT5931 discussion | Old image/source lineage; not a verified TCL image |
 | [MediaTek-Connectivity/mt6620](https://github.com/MediaTek-Connectivity/mt6620) | Sibling MT6620 combo driver and WCN design clues | Not a drop-in MT5931 driver and not mainline |
+| [TCLOpenSource/TCL_Kernel_OpenSource](https://github.com/TCLOpenSource/TCL_Kernel_OpenSource) | Search target for an exact TCL kernel tree | No usable matching RK3066 source was found in the inspected snapshot |
+
+The generic RBox candidate in Galland/Linux3188 now compiles as
+SOC_RK3066 plus MACH_RK30_BOX_PIZZA with the MT5931/MT6622, legacy Mali/UMP,
+and RK30 display/HDMI component paths. This strengthens the source route but
+does not establish that the attached TCL PCB is the Pizza variant.
 
 No inspected public repository contained a target-specific rk30mtk DTS,
 schematic, serial-specific loader, or complete verified TCL NAND image. The
