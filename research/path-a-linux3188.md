@@ -1,10 +1,21 @@
-# Path A — Use Galland/Linux3188 kernel as-is (Picuntu path)
+# Path A — Use Galland/Linux3188 kernel as a legacy source base (Picuntu path)
+
+Important: this is a historical source path, not a ready-to-flash image for
+rk30mtk. The attached unit's exact NAND map, board GPIOs, loader, DRAM
+settings, and display wiring differ from the generic examples below. See
+the hardware-firmware-boot document before any native experiment.
 
 **Goal:** boot a full (non-Android) Linux on the RK3066 stick with working MT5931 WiFi, MT6622 BT, Mali GPU, and NAND support.
 
-**Verdict: the realistic path. This is how RK3066 boxes actually ran Linux (Picuntu).** It is *not* literally plug-and-play — the shipped `.config` targets RK3188 — but the pieces for this exact device all exist in-tree.
+**Verdict: the closest all-hardware source path, but not plug-and-play.** This
+is how some RK3066 boxes ran Linux (Picuntu), but the shipped `.config`
+targets RK3188 and the pieces still need exact-board integration.
 
 ## What Linux3188 is
+
+The checked-in Linux3188 default configuration disables the MT5931/MT6622
+combo and the Mali/UMP stack. The source paths exist, but this repository is
+not a ready configuration or image for this device.
 
 - Kernel **3.0.36** (matches the device's `3.0.36+`), a fork of `aloksinha2001/Linux3188`, the **Picuntu kernel** (RK3188 tree modified by Galland to also boot RK3066).
 - Contains all the components this device needs:
@@ -29,15 +40,31 @@ RK3066's BootROM has **no SDMMC support** (per U-Boot docs), so boot is: NAND �
 
 ## Three-step recipe (proven on MK802IIIS / UG802 / MK808 / iMito)
 
-1. **Flash kernel** (Windows: `RKAndroidTool v1.35`; Linux: `rkflashtool_rk3066`):
-   - Dual-boot → recovery partition: `sudo ./rkflashtool w 0x10000 0x8000 < recovery.img`
-   - Linux-only → kernel partition: `sudo ./rkflashtool w 0xA000 0x6000 < recovery.img` (offsets in 512-byte sectors; exact values come from your stick's partition table)
-   - Reboot: `sudo ./rkflashtool b`
-   - Boot modes: `adb reboot bootloader` (maskrom, USB `2207:300a`), `adb reboot recovery` (launch Linux)
+The historical procedure below is not proven on rk30mtk. In particular, do not
+assume adb reboot bootloader produces Rockusb/maskrom; the attached unit is
+currently USB 2207:0010, while the Rockchip tooling expects USB 2207:300a.
+Observe the USB state and preserve a complete backup before any write.
+
+1. **Prepare a reversible boot test** (Windows: RKAndroidTool; Linux:
+   rkflashtool_rk3066). Do not copy the historical offsets in this note.
+   Read and archive this unit's parameter/partition data first, then use only
+   the exact values confirmed for this unit. The attached map reports kernel
+   at offset `0x4000`, size `0x8000` sectors, and recovery at offset
+   `0x14000`, size `0x10000` sectors; these are evidence, not a write
+   command.
+   - Do not use the historical reboot/flash commands until the loader,
+     parameter backup, and recovery path are verified on this unit.
 2. **Rootfs on microSD**: format ext4, **label `linuxroot`**, extract an armhf rootfs.
-3. **Boot**: reboot into recovery; kernel mounts the SD (`root=LABEL=linuxroot`) and drops to login (`root` / `12qwaszx`).
+3. **Boot**: only after a device-specific image is validated, test a removable
+   rootfs. Historical login credentials in old Picuntu notes are not a safe
+   default.
 
 ## NAND-only (SD-free) boot — directly relevant (5.7 GB NAND)
+
+The Linuxium sequence below is historical and repartitions NAND. On the
+untouched attached unit, mtdblock0 is the 4 MiB misc partition, not a Linux
+rootfs. Do not run the repartition or erase sequence until a complete,
+device-specific backup and recovery path has been independently validated.
 
 `linuxium/3066-NAND` flow:
 - Repartition NAND: `mtdparts=rk29xxnand:0x00008000@0x00002000(boot),0x00008000@0x0000A000(kernel),-@0x00012000(linux)` → rootfs on `/dev/mtdblock0` (~3.5 GB)
@@ -48,12 +75,12 @@ RK3066's BootROM has **no SDMMC support** (per U-Boot docs), so boot is: NAND �
 
 | Item | Change |
 |---|---|
-| Machine | `CONFIG_ARCH_RK30=y` (default `SOC_RK3066`) + a BOX board — `MACH_RK30_BOX_HOTDOG` is the proven choice (linuxium used it: `root=/dev/mtdblock0 ... mtdparts=rk29xxnand:-@0x00012000(linux)`) |
+| Machine | `CONFIG_ARCH_RK30=y` with an RK3066 board definition; a BOX board is only a candidate reference, not a proven match for rk30mtk |
 | WiFi | `CONFIG_MT5931_MT6622=y` (this device = MT5931 + MT6622 combo), plus `CONFIG_WIFI_CONTROL_FUNC=y` |
 | Mali | `CONFIG_MALI=m` (+`CONFIG_UMP`) — not enabled in any shipped config |
 | GPIOs | WiFi power/reset pins per-PCB. MK802IIIS needed `RK30SDK_WIFI_GPIO_POWER_N=RK30_PIN3_PC7`, `RESET=RK30_PIN3_PD1` (stock = PD0/PA7). A wrong GPIO → `mt6622 reset_gpio is busy!` |
 | Cmdline | Picuntu: `root=LABEL=linuxroot` (SD) or `root=/dev/mtdblock0` (NAND) + mtdparts |
-| Defconfigs | `rk3066b_sdk` / `rk3066b_m701` exist but **won't link** (missing `board-rk3066b-*.c` files) — use `MACH_RK30_BOX_*` instead |
+| Defconfigs | `rk3066b_sdk` / `rk3066b_m701` are historical candidates and need source/build verification; do not select a BOX machine solely from another product |
 
 ## Rootfs options
 
