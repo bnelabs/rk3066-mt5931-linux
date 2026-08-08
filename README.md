@@ -9,7 +9,7 @@ Bringing real Linux to a TCL Android TV stick with Rockchip RK3066, MediaTek MT5
 | Model / ID | `rk30mtk` Android TV stick, serial `HNPKB1AIA4`, adb ID `HNPKB1AIA4` |
 | SoC | Rockchip RK3066 (RK30board, dual ARMv7 Cortex-A9, NEON, max 1.6GHz) |
 | GPU | Mali-400 (drivers/gpu/mali, r3p2 lineage) |
-| RAM | 857 MB total (~488 MB free after debloat) |
+| RAM | 857 MB total; ~270 MB free in the latest attached-device check (varies by Android services) |
 | Storage | 5.7 GB internal NAND (FAT32, label `ROCKCHIPS`, mtdblock9), /data 1 GB, /system ~209 MB free |
 | Display | 720x1280 @ 60Hz, density 160 |
 | Codecs | HW decode H.264 / VP8 / H.263 / MPEG4 only (no HEVC/VP9) |
@@ -24,6 +24,35 @@ Bringing real Linux to a TCL Android TV stick with Rockchip RK3066, MediaTek MT5
 3. **Mainline port (5.x/6.x):** technically feasible for a minimal STA subset but a large job (~2-4 person-months) with hard API breakages and a firmware ownership problem. Monitor/injection is effectively impossible (full-MAC chip).
 4. **Chroot on stock Android:** simplest — the driver already works in Android; a Debian/Kali ARMv7 chroot just uses `wlan0` over the running kernel. No WiFi driver work needed.
 
+## Detailed review (2026-08-08)
+
+The GPU assessment is now separate from the Wi-Fi assessment:
+
+- The legacy Linux3188 tree contains the MT5931/MT6622 vendor stack and a
+  Mali-400/UMP kernel stack, but its checked-in default configuration disables
+  both the wireless combo and Mali. It is a source base, not a ready image.
+- Current mainline Linux contains RK3066 device trees, VOP/HDMI support,
+  rockchip,rk3066-mali bindings, and the Lima DRM driver. Official Mesa
+  documentation covers Mali-400. This makes a modern GPU/display port
+  credible, subject to an exact rk30mtk device tree.
+- Current mainline still has no MT5931 driver. A modern native system needs an
+  external in-tree Wi-Fi adapter or networking supplied by the Android host.
+- A stock-Android chroot is the lowest-risk path: Alpine armv7 is the best
+  small CLI starting point, and Debian armhf is the best general package
+  starting point. A chroot inherits Android's wlan0 but does not create a
+  new GPU driver or a security boundary.
+- The attached NAND layout does not match the historical Path A example
+  offsets. No flashing or partition mutation is authorized by this research
+  update.
+
+The expanded evidence and decision package is in:
+
+- [Hardware, firmware, storage, and boot](docs/hardware-firmware-boot.md)
+- [Kernel, Wi-Fi, and GPU options](research/kernel-gpu-wifi.md)
+- [Chroot options](research/chroot-options.md)
+- [Path D chroot](research/path-d-chroot.md)
+- [Hardware and software source matrix](research/source-matrix.md)
+
 ## Repo layout
 
 ```
@@ -31,7 +60,11 @@ docs/
   device-audit.md          # Full hardware + software audit of the stick
   debloat-log.md           # What was removed (with restore notes)
 research/
-  path-a-linux3188.md      # Use Galland/Linux3188 kernel as-is (Picuntu path)
+  path-d-chroot.md         # Linux userland in stock Android
+  kernel-gpu-wifi.md       # Split Wi-Fi and GPU kernel feasibility
+  chroot-options.md        # Alpine, OpenWrt, Debian, Ubuntu, Kali, Buildroot
+  source-matrix.md          # Related repositories and official sources
+  path-a-linux3188.md      # Legacy Linux3188 source path (Picuntu lineage)
   path-b-external-module.md# Build mt5931 as external module for 3.0.36
   path-c-mainline.md       # Port MT5931 to mainline (API breakage + verdict)
 ```
@@ -52,4 +85,5 @@ research/
 - [x] Debloat (10 packages removed, Logitech keyboard + YouTube kept)
 - [x] Driver availability research (exists, wrong earlier claim corrected)
 - [x] Path A / B / C feasibility research
+- [x] Detailed hardware, firmware, boot, GPU, distro, and source review
 - [ ] Decide which path to pursue (A = Linux3188 full Linux, B = external module, C = mainline, D = chroot on Android)

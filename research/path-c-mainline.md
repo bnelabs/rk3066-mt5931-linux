@@ -1,5 +1,10 @@
 # Path C Research — Porting the MediaTek MT5931 SDIO WiFi driver to mainline Linux
 
+Scope note: this file evaluates the MT5931 Wi-Fi port. It does not mean that
+the RK3066 GPU is unsupported by mainline. The separate
+[kernel, Wi-Fi, and GPU review](kernel-gpu-wifi.md) documents current RK3066
+DRM/Lima/Mali-400 and HDMI support.
+
 **Target device:** RK3066 Android TV stick, dual-core Cortex-A9, 857MB RAM, WiFi = MediaTek MT5931 (SDIO `037a:5931`), BT = MT6622.
 **Driver source under study:** `/tmp/MTK5931/wifi/mtk_5931/` and `/tmp/Linux3188/drivers/net/wireless/mt5931/` (2013-era MediaTek vendor driver, written against a 3.0.x kernel — the MT6620/MT5931 combo driver lineage).
 **Date:** 2026-08-08

@@ -2,6 +2,10 @@
 
 Audit performed via `adb` shell on the live device. Serial `HNPKB1AIA4`.
 
+For the expanded GPU, firmware, boot, and exact-NAND analysis, see
+[hardware-firmware-boot.md](hardware-firmware-boot.md) and
+[kernel-gpu-wifi.md](../research/kernel-gpu-wifi.md).
+
 ## System
 
 ```
@@ -17,7 +21,7 @@ ADB: /opt/homebrew/bin/adb
 |---|---|
 | SoC | Rockchip RK3066 (RK30board, ARMv7 Cortex-A9, NEON, max 1.6GHz, idle 252MHz) |
 | GPU | Mali-400 |
-| RAM | 857 MB total, ~488 MB free (after debloat) |
+| RAM | 857 MB total; latest attached check observed approximately 270 MB free, which varies with Android services |
 | NAND | 5.7 GB internal (FAT32, label `ROCKCHIPS`, `/dev/block/mtdblock9`, i.e. the Android `userdata` partition of the rk29xxnand layout) |
 | /data | 1 GB (~576 MB free after debloat) |
 | /system | ~209 MB free |
