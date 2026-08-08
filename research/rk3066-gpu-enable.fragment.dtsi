@@ -1,0 +1,20 @@
+/*
+ * RK3066 Mali-400/Lima enablement fragment.
+ *
+ * REVIEW ONLY: include this from a complete, board-verified RK3066 DTS.
+ * It is not a standalone DTS, DTB, boot image, or flashable deployment.
+ * Do not use it until RAM, regulators, clocks, reset, pinctrl, display
+ * endpoints, NAND, and bootloader handoff have been verified for rk30mtk.
+ */
+
+&gpu {
+	status = "okay";
+};
+
+&vop0 {
+	status = "okay";
+};
+
+&hdmi {
+	status = "okay";
+};

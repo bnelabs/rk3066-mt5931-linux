@@ -67,6 +67,9 @@ research/
   path-a-linux3188.md      # Legacy Linux3188 source path (Picuntu lineage)
   path-b-external-module.md# Build mt5931 as external module for 3.0.36
   path-c-mainline.md       # Port MT5931 to mainline (API breakage + verdict)
+  gpu-support.md           # Live GPU evidence and mainline/Android options
+  rk3066-lima.config       # Non-flashing mainline Lima/DRM kernel fragment
+  rk3066-gpu-enable.fragment.dtsi # Review-only board-DTS enablement fragment
 ```
 
 ## Key sources
@@ -85,5 +88,5 @@ research/
 - [x] Debloat (10 packages removed, Logitech keyboard + YouTube kept)
 - [x] Driver availability research (exists, wrong earlier claim corrected)
 - [x] Path A / B / C feasibility research
-- [x] Detailed hardware, firmware, boot, GPU, distro, and source review
+- [x] Detailed hardware, firmware, boot, GPU, distro, source, and live Android-vs-DRM review
 - [ ] Decide which path to pursue (A = Linux3188 full Linux, B = external module, C = mainline, D = chroot on Android)
