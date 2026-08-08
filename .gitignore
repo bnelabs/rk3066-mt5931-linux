@@ -1,0 +1,8 @@
+*.ko
+*.o
+*.img
+kernel.img
+recovery.img
+boot.img
+node_modules/
+.DS_Store
