@@ -49,3 +49,29 @@ Stop and return to the stock Android environment if a test requires:
 
 Those actions belong to the separate native Linux tracks and require a
 device-specific backup and recovery plan.
+
+## Live deployment verification — 2026-08-08
+
+This plan was executed on the attached device without external storage or
+boot/partition changes:
+
+- Alpine 3.24.1 armv7 minirootfs was downloaded from the
+  [official Alpine mirror](https://dl-cdn.alpinelinux.org/alpine/v3.24/releases/armv7/alpine-minirootfs-3.24.1-armv7.tar.gz)
+  and verified before transfer:
+  `50942d567e6ee422c16cb46d5c282ed9d8adc9007c2a483faf4148a18c64ce32`.
+- The rootfs is installed at `/data/local/alpine` on the existing ext4
+  `/data` partition. Approximately 541 MB remained free after the test
+  package set was installed.
+- `apk add --no-cache bash ca-certificates curl iproute2 procps` completed
+  successfully: 43 packages, 13.2 MiB installed.
+- Inside the chroot, Alpine reported `armv7l` on the stock `3.0.36+` kernel,
+  inherited `wlan0` with its address and route, resolved DNS, and completed an
+  HTTPS request.
+- The bound Android `/dev` exposed `/dev/mali`, `/dev/ump`, `/dev/rga`, and
+  `/dev/ion`; this confirms device-node visibility and permissions only, not
+  a native Mesa/DRM or 3D-rendering result.
+- `tools/enter-alpine-rk3066.sh` provides a reversible launcher. Its test
+  session exited with no remaining `/data/local/alpine` mounts.
+
+The launcher and package test prove a useful Alpine userland and inherited
+network path. They do not replace Android's MT5931 or Mali kernel drivers.
