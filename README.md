@@ -24,6 +24,27 @@ Bringing real Linux to a TCL Android TV stick with Rockchip RK3066, MediaTek MT5
 3. **Mainline port (5.x/6.x):** technically feasible for a minimal STA subset but a large job (~2-4 person-months) with hard API breakages and a firmware ownership problem. Monitor/injection is effectively impossible (full-MAC chip).
 4. **Chroot on stock Android:** simplest — the driver already works in Android; a Debian/Kali ARMv7 chroot just uses `wlan0` over the running kernel. No WiFi driver work needed.
 
+## Current evidence addendum
+
+The read-only stock capture established the Rockchip KRNL kernel/boot wrapper,
+Android recovery geometry, and a byte-identical copy of the running kernel in
+recovery. The stock WIFI_RAM_CODE hash matches the tested Linux3188 source
+tree exactly.
+
+A disposable Docker build now compiles the generic RK30-box candidate for
+RK3066 + MT5931/MT6622 + Mali/UMP + display/HDMI. This is source-component
+validation, not a bootable TCL image: the full kernel still stops at an old
+generic FAT inline-assembly incompatibility with GCC 12, and the exact board
+runtime configuration is not proven.
+
+The detailed records are:
+
+- [Pinned source inventory](research/source-lock.md)
+- [Stock boot and firmware forensics](research/stock-boot-forensics.md)
+- [Stock capture hashes](research/stock-capture-sha256.txt)
+- [RK30-box candidate configuration](research/rk3066-linux3188-rk30box-pizza.config)
+- [Read-only stock-capture verifier](tools/verify-rk3066-stock-capture.py)
+
 ## Detailed review (2026-08-08)
 
 The GPU assessment is now separate from the Wi-Fi assessment:
@@ -72,11 +93,15 @@ research/
   rk3066-lima.config       # Non-flashing mainline Lima/DRM kernel fragment
   rk3066-gpu-enable.fragment.dtsi # Review-only board-DTS enablement fragment
   rk3066-linux3188-mt5931-mali.config # Legacy MT5931 + Mali enablement
+  rk3066-linux3188-rk30box-pizza.config # RK30-box component-build result
   build-results.md         # Docker compile results and safe deployment boundary
 
 build/
   linux3188/                # Docker cross-build for legacy Wi-Fi + Mali
   mainline/                 # Docker cross-build for Lima/RK3066 reference
+
+tools/
+  verify-rk3066-stock-capture.py # Read-only KRNL/Android-boot/hash verifier
 ```
 
 ## Key sources
@@ -97,4 +122,5 @@ build/
 - [x] Path A / B / C feasibility research
 - [x] Detailed hardware, firmware, boot, GPU, distro, source, and live Android-vs-DRM review
 - [x] Docker validation: legacy MT5931/vendor Mali components and mainline Lima/RK3066 reference zImage/DTB
+- [x] RK30-box MT5931/Mali/UMP/display component validation and stock image forensics
 - [ ] Decide which path to pursue (A = Linux3188 full Linux, B = external module, C = mainline, D = chroot on Android)

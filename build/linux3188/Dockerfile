@@ -12,6 +12,8 @@ RUN apt-get update \
 
 COPY build.sh /usr/local/bin/rk3066-linux3188-build
 COPY build-components.sh /usr/local/bin/rk3066-linux3188-components
+COPY build-rk30box-components.sh /usr/local/bin/rk3066-linux3188-rk30box-components
 COPY compiler-gcc12.h /usr/share/rk3066-linux3188/compiler-gcc12.h
+COPY compat/board-rk30-box-hdmi-decl.h /usr/share/rk3066-linux3188/board-rk30-box-hdmi-decl.h
 
 ENTRYPOINT ["sh", "/usr/local/bin/rk3066-linux3188-build"]

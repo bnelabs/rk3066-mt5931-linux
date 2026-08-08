@@ -107,6 +107,28 @@ These repositories document hardware families and procedures, not a verified
 recovery image for rk30mtk. The safest first native step is read-only backup
 and image inspection; it is not flashing.
 
+## Recovered stock image contract
+
+The attached kernel and boot partitions were captured read-only and use the
+Rockchip KRNL wrapper: four-byte KRNL magic, little-endian payload length,
+payload, four-byte Rockchip CRC, then padding. The kernel payload is 8,929,316
+bytes and the boot payload is a 2,193,790-byte gzip cpio ramdisk. The recovery
+partition is an Android boot image with 16 KiB pages, the same 8,929,316-byte
+kernel, and a 4,101,457-byte gzip ramdisk. The kernel payload from mtd1 and the
+recovery kernel compare byte-for-byte.
+
+The stock boot ramdisk contains init.rk30board.rc, MT5931 services
+(mtk_psupplicant, mtk_wsupplicant, and mtk_ap_daemon), and uevent rules for
+/dev/mali, /dev/ump, /dev/rga, /dev/vpu, /dev/vpu_service, and /dev/ion. This
+explains the active Android Mali/UMP path and gives a reproducible offline
+packaging target, but it does not expose the original board Kconfig or prove
+that a generic RBox board file is the exact TCL PCB.
+
+The full capture hashes and a read-only verifier are in
+[research/stock-boot-forensics.md](../research/stock-boot-forensics.md),
+[research/stock-capture-sha256.txt](../research/stock-capture-sha256.txt), and
+[tools/verify-rk3066-stock-capture.py](../tools/verify-rk3066-stock-capture.py).
+
 ## Board-specific gaps still open
 
 No public exact rk30mtk board DTS, schematic, or serial-specific kernel source

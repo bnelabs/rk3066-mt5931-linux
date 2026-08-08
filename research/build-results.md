@@ -43,17 +43,48 @@ ARM cross compiler, GCC 12 compatibility glue, GNU89 inline semantics, and a
 serial Mali component build because this old vendor Kbuild reuses unsafe
 intermediate paths under parallel make.
 
-The complete legacy kernel did **not** become a bootable image. The source
-snapshot references board objects such as
-`arch/arm/mach-rk30/board-rk3066b-m701.o`, but the corresponding board source
-is absent. `clock_data.uu` is present and can be decoded, but that does not
-replace the board file: board code controls clocks, GPIO, power, display,
-NAND, and the MT5931 SDIO wiring. Inventing it would be an unsafe deployment
-step.
+The original M701 configuration did not produce a bootable image. Its source
+snapshot references board object
+arch/arm/mach-rk30/board-rk3066b-m701.o, but the corresponding board source
+is absent. clock_data.uu is present and can be decoded, but it does not replace
+board code: that code controls clocks, GPIO, power, display, NAND, and the
+MT5931 SDIO wiring. Inventing the missing M701 file would be unsafe.
 
-Conclusion: the legacy route is the only proven MT5931 kernel-source route,
-but it needs the exact TCL/rk30mtk board source or a known-good vendor image
-from the same hardware before a kernel can be safely boot-tested.
+The generic RBox candidate below is a separate source configuration and is
+compile-confirmed at the component level. It does not remove the need for
+exact TCL board/runtime evidence before booting.
+
+### RK30-box / RK3066 Pizza candidate
+
+The public generic RBox source was configured as SOC_RK3066 with
+MACH_RK30_BOX_PIZZA, after disabling unrelated RK3066B/M701 and generic
+RKWIFI choices and selecting the stock TPS65910 PMIC path. These component
+objects compiled together:
+
+    arch/arm/mach-rk30/board-rk30-box.o
+    arch/arm/mach-rk30/board-rk30-sdk-rfkill.o
+    drivers/net/wireless/mt5931/built-in.o
+    drivers/gpu/mali/mali/mali.o
+    drivers/gpu/mali/ump/ump.o
+    drivers/video/rockchip/lcdc/rk30_lcdc.o
+    drivers/video/rockchip/hdmi/rk30/rk30_hdmi.o
+    drivers/video/rockchip/hdmi/rk30/rk30_hdmi_hw.o
+
+The MT5931 target required NL80211_TESTMODE. This is a compile-confirmed
+source candidate, not a bootable image: the RBox Pizza variant could still
+have different GPIO, regulator, DRAM, NAND, or display values from the TCL
+board.
+
+The full legacy zImage attempt stopped because GCC 12 triggers generic Linux
+3.0.36 ARM put_user inline-assembly assertions in fs/fat/dir.c. This is
+outside the board, Wi-Fi, GPU, and display targets. It is recorded as a
+toolchain compatibility blocker rather than hidden behind an unreviewed
+kernel patch.
+
+The reproducible candidate configuration is driven by
+build/linux3188/build-rk30box-components.sh and summarized in
+research/rk3066-linux3188-rk30box-pizza.config. The expected success marker
+with display enabled is RK30BOX-MT5931-MALI-HDMI-COMPONENTS-OK.
 
 ### Mainline Linux / Lima / RK3066 reference
 
@@ -99,16 +130,34 @@ rsync -a --exclude .git --exclude .config \
 docker build --platform linux/arm64 \
   -t rk3066-linux3188-builder:bookworm build/linux3188
 
-docker run --rm --platform linux/arm64 \
+docker run --rm --platform linux/arm64 --entrypoint sh \
   -v /tmp/Linux3188-build:/src:rw \
   -e KERNEL_SRC=/src -e OUTPUT=/src -e JOBS=4 -e MALI_JOBS=1 \
   rk3066-linux3188-builder:bookworm \
-  sh /usr/local/bin/rk3066-linux3188-components
+  -c 'sh /usr/local/bin/rk3066-linux3188-components'
 ```
 
-The full legacy attempt uses the same image and `build.sh`; it is expected to
-stop at the absent exact-board object described above until that source is
-recovered.
+The legacy full-kernel attempt still uses the same image and build.sh. It
+remains a separate deployment path: the original M701 board object is absent,
+and the fresh GCC 12 run reaches the generic Linux 3.0.36 FAT inline-assembly
+compatibility blocker before a bootable image can be produced.
+
+### RK30-box candidate component validation
+
+The Docker image has a default full-build entrypoint. Override it when
+running the candidate component recipe:
+
+    docker run --rm --platform linux/arm64 --entrypoint sh \
+      -v /tmp/Linux3188-build:/src:rw \
+      -e KERNEL_SRC=/src -e JOBS=4 -e MALI_JOBS=1 \
+      rk3066-linux3188-builder:bookworm \
+      -c 'sh /usr/local/bin/rk3066-linux3188-rk30box-components'
+
+The expected marker is
+RK30BOX-MT5931-MALI-HDMI-COMPONENTS-OK. The recipe injects one declaration-only
+compatibility header because the public board file references hdmi_init_lcdc
+without a prototype; it changes no driver behavior. This command builds
+source components only and does not create or flash a device image.
 
 ### Mainline GPU reference validation
 
@@ -143,10 +192,16 @@ docker run --rm --platform linux/arm64 \
 
 ## Deployment decision
 
+The earlier M701-specific paragraph above describes why the original default
+configuration could not produce a full kernel. The generic RK30-box candidate
+now compiles the board, MT5931/MT6622, Mali/UMP, and display/HDMI components;
+the exact TCL board/runtime and the generic GCC-12 full-kernel compatibility
+issue remain open.
+
 | Route | What is proven | Current decision |
 |---|---|---|
 | Stock Android + chroot | Existing MT5931 and Mali remain usable through Android | Best immediate option; safe to keep testing user space |
-| Legacy Linux3188 | MT5931 and vendor Mali source components compile | Best future Wi-Fi kernel route, blocked by exact board source |
+| Legacy Linux3188 + RBox candidate | MT5931/MT6622, vendor Mali/UMP, display/HDMI, and generic RK30 board components compile | Best future Wi-Fi kernel route; exact TCL board/runtime and a GCC-12 full-kernel fix remain open |
 | Mainline Lima | RK3066 reference GPU kernel/DTB compiles | Good GPU research route, not tablet-bootable yet and no MT5931 |
 | Flash either kernel now | No exact board DT, partition/image contract, or recovery path | Not reasonable; do not flash |
 
